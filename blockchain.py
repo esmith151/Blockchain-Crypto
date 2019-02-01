@@ -16,7 +16,8 @@ def hash_block(block):
 
 def get_balance(participant):
     tx_sender = [[tx['amount'] for tx in block['transactions'] if tx['sender'] == participant] for block in blockchain]
-     
+    open_tx_sender = [tx['amount'] for tx in open_transactions if tx['sender'] == participant]
+    tx_sender.append(open_tx_sender)
     amount_sent = 0
     for tx in tx_sender:
         if len(tx) > 0:
@@ -70,11 +71,12 @@ def mine_block():
         'recipient': owner,
         'amount': MINING_REWARD
     }
-    open_transactions.append(reward_transaction)
+    copied_transactions = open_transactions[:]
+    copied_transactions.append(reward_transaction)
     block = {
         'previous_hash': hashed_block,
         'index': len(blockchain),
-        'transactions': open_transactions
+        'transactions': copied_transactions
         }
     blockchain.append(block)
     return True
@@ -125,8 +127,10 @@ while waiting_for_input:
         tx_data = get_transaction_value()
         recipient,amount = tx_data
         #Add the transaction to the blockchain
-        add_transaction(recipient,amount = amount)
-        print(open_transactions)
+        if add_transaction(recipient,amount = amount):
+            print(open_transactions)
+        else:
+            print('Transaction Failed')
     elif user_choice == '2':
         if mine_block():
             open_transactions = []
