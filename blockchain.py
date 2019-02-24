@@ -1,19 +1,35 @@
 import functools
-# Initializing our blockchain list
+import hashlib
+import json
+#Mining reward for miners(creating new block)
 MINING_REWARD = 10
 
+#Starting block for the bc
 genesis_block = {
     'previous_hash': '',
     'index': 0,
     'transactions': []
     }
+
+ # Initializing our blockchain list
 blockchain = [genesis_block]
+
+# Unhandled transactions
 open_transactions = []
+
+#We are the owner of blockchain, this is our identifier
 owner = 'Eric'
 participants = {'Eric'}
 
 def hash_block(block):
-    return '-'.join([str(block[key]) for key in block])
+    """ Hashes a block and creates a string representation of it
+    
+    
+        Arguments:
+        :block: the block that should be hashed.
+    
+     """
+    return hashlib.sha256(json.dumps(block).encode()).hexdigest()
 
 def get_balance(participant):
     tx_sender = [[tx['amount'] for tx in block['transactions'] if tx['sender'] == participant] for block in blockchain]
@@ -62,13 +78,20 @@ def add_transaction(recipient, sender = owner,amount = 1.0):
 
 
 def mine_block():
+    """  Create a new block and add open transactions to it   """
+    # Fetch the current last block of the blockchain
     last_block = blockchain[-1]
+    # Hash the last block (=> to be able to compare it to the stored hash value)
     hashed_block = hash_block(last_block)
+    print(hashed_block)
+    #Miners should be rewarded
     reward_transaction = {
         'sender': 'MINING',
         'recipient': owner,
         'amount': MINING_REWARD
     }
+    # Copy transaction instead of manipuating the original open_transactions
+    # This ensures that if for some reason the mining should fail, we dont reward the miner
     copied_transactions = open_transactions[:]
     copied_transactions.append(reward_transaction)
     block = {
